@@ -170,3 +170,111 @@ function animate(){
   renderer.render(scene,camera);
 }
 animate();
+// BASIC FPS SETUP
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// LIGHT
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5, 10, 5);
+scene.add(light);
+
+// FLOOR
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshStandardMaterial({ color: 0x222222 })
+);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
+// PLAYER (CYLINDER)
+const player = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.5, 0.5, 2, 16),
+  new THREE.MeshStandardMaterial({ color: 0x888888 })
+);
+player.position.y = 1;
+scene.add(player);
+
+camera.position.set(0, 1.6, 0);
+player.add(camera);
+
+// CONTROLS
+const keys = {};
+document.addEventListener("keydown", e => keys[e.code] = true);
+document.addEventListener("keyup", e => keys[e.code] = false);
+
+let yaw = 0;
+let pitch = 0;
+
+document.body.addEventListener("click", () => {
+  document.body.requestPointerLock();
+});
+
+document.addEventListener("mousemove", e => {
+  if (document.pointerLockElement === document.body) {
+    yaw -= e.movementX * 0.002;
+    pitch -= e.movementY * 0.002;
+    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+  }
+});
+
+// SHOOTING
+let ammo = 12;
+const ammoUI = document.getElementById("ammo");
+
+function shoot() {
+  if (ammo <= 0) return;
+  ammo--;
+  ammoUI.textContent = "Ammo: " + ammo;
+
+  const ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+  const beam = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      ray.ray.origin,
+      ray.ray.origin.clone().add(ray.ray.direction.multiplyScalar(50))
+    ]),
+    new THREE.LineBasicMaterial({ color: 0xffff00 })
+  );
+
+  scene.add(beam);
+  setTimeout(() => scene.remove(beam), 100);
+}
+
+document.addEventListener("mousedown", shoot);
+
+// LOOP
+function animate() {
+  requestAnimationFrame(animate);
+
+  player.rotation.y = yaw;
+  camera.rotation.x = pitch;
+
+  const speed = 0.1;
+  if (keys["KeyW"]) player.translateZ(-speed);
+  if (keys["KeyS"]) player.translateZ(speed);
+  if (keys["KeyA"]) player.translateX(-speed);
+  if (keys["KeyD"]) player.translateX(speed);
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
