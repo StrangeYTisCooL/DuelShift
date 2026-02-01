@@ -130,3 +130,63 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #111;
+  font-family: Arial, sans-serif;
+}
+
+/* MENU */
+#menuOverlay {
+  position: fixed;
+  inset: 0;
+  background: #111;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+#menuOverlay input,
+#menuOverlay button {
+  padding: 10px;
+  margin: 6px;
+  font-size: 16px;
+}
+
+#menuButtons {
+  display: none;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+/* HUD */
+#playerInfo {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  color: white;
+  z-index: 5;
+}
+
+#ammoDisplay {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  color: white;
+  background: #222;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  display: none;
+}
+
+/* CANVAS */
+canvas {
+  position: fixed;
+  inset: 0;
+}
