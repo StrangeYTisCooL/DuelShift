@@ -1,101 +1,132 @@
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  overflow: hidden;
-  background: #111;
+// ---------- LOGIN ----------
+const menu = document.getElementById("menuOverlay");
+const loginBtn = document.getElementById("loginBtn");
+const playBtn = document.getElementById("playBtn");
+const menuButtons = document.getElementById("menuButtons");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const playerInfo = document.getElementById("playerInfo");
+const ammoUI = document.getElementById("ammoDisplay");
+
+let loggedIn = false;
+
+loginBtn.onclick = () => {
+  if (!usernameInput.value || !passwordInput.value) return;
+
+  if (usernameInput.value === "SkyPer" && passwordInput.value === "1618917") {
+    playerInfo.innerHTML = `<span style="color:red">[Owner]</span> SkyPer`;
+  } else {
+    playerInfo.innerHTML = `<span style="color:gray">[Player]</span> ${usernameInput.value}`;
+  }
+
+  usernameInput.style.display = "none";
+  passwordInput.style.display = "none";
+  loginBtn.style.display = "none";
+  menuButtons.style.display = "flex";
+  loggedIn = true;
+};
+
+playBtn.onclick = () => {
+  if (!loggedIn) return;
+  menu.style.display = "none";
+  ammoUI.style.display = "block";
+  startGame();
+};
+
+// ---------- GAME ----------
+let scene, camera, renderer, player;
+let yaw = 0, pitch = 0;
+let ammo = 6;
+
+const keys = {};
+document.addEventListener("keydown", e => keys[e.code] = true);
+document.addEventListener("keyup", e => keys[e.code] = false);
+
+function startGame() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x111111);
+
+  camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+
+  renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("game") });
+  renderer.setSize(innerWidth, innerHeight);
+
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(5, 10, 5);
+  scene.add(light);
+
+  // FLOOR
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    new THREE.MeshStandardMaterial({ color: 0x222222 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  // PLAYER (TEMP CYLINDER — REPLACE WITH BLOCKBENCH MODEL LATER)
+  player = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.5, 2, 16),
+    new THREE.MeshStandardMaterial({ color: 0x888888 })
+  );
+  player.position.y = 1;
+  scene.add(player);
+
+  camera.position.set(0, 1.6, 0);
+  player.add(camera);
+
+  document.body.requestPointerLock();
+
+  animate();
 }
 
-/* FULLSCREEN MENU OVERLAY */
-#menuOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #111;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-}
-#menuOverlay input, #menuOverlay button {
-  padding: 10px;
-  margin: 5px;
-  font-size: 16px;
-}
-#menuButtons {
-  display: none;
-  margin-top: 20px;
-  flex-direction: row;
-  gap: 20px;
+// ---------- MOUSE LOOK ----------
+document.addEventListener("mousemove", e => {
+  if (document.pointerLockElement !== document.body) return;
+  yaw -= e.movementX * 0.002;
+  pitch -= e.movementY * 0.002;
+  pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+});
+
+// ---------- SHOOT ----------
+document.addEventListener("mousedown", () => {
+  if (ammo <= 0) return;
+  ammo--;
+  ammoUI.textContent = `Ammo: ${ammo} / 6`;
+
+  const ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+  const beam = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      ray.ray.origin,
+      ray.ray.origin.clone().add(ray.ray.direction.multiplyScalar(40))
+    ]),
+    new THREE.LineBasicMaterial({ color: 0xffff00 })
+  );
+
+  scene.add(beam);
+  setTimeout(() => scene.remove(beam), 80);
+});
+
+// ---------- LOOP ----------
+function animate() {
+  requestAnimationFrame(animate);
+
+  player.rotation.y = yaw;
+  camera.rotation.x = pitch;
+
+  const speed = 0.12;
+  if (keys["KeyW"]) player.translateZ(-speed);
+  if (keys["KeyS"]) player.translateZ(speed);
+  if (keys["KeyA"]) player.translateX(-speed);
+  if (keys["KeyD"]) player.translateX(speed);
+
+  renderer.render(scene, camera);
 }
 
-/* HUD */
-#weaponDisplay, #ammoDisplay, #playerInfo, #shop {
-  z-index: 10;
-  position: absolute;
-}
-#weaponDisplay {
-  bottom: 10px;
-  right: 10px;
-  width: 50px;
-  height: 20px;
-  background: gray;
-  border: 2px solid #555;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: white;
-  display: none;
-}
-#ammoDisplay {
-  bottom: 50px;
-  right: 10px;
-  color: white;
-  background: #222;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-family: monospace;
-  display: none;
-}
-#playerInfo { top: 10px; right: 10px; color: white; }
-
-/* SHOP */
-#shop {
-  right: 10px;
-  top: 70px;
-  width: 200px;
-  height: 300px;
-  background: #333;
-  color: white;
-  overflow-y: auto;
-  padding: 10px;
-  display: none;
-}
-
-/* CANVAS */
-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #111;
-  z-index: 1;
-}
-
-/* MUZZLE FLASH */
-.flash {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  background: yellow;
-  border-radius: 50%;
-  right: 60px;
-  bottom: 30px;
-  opacity: 0.8;
-}
+window.addEventListener("resize", () => {
+  if (!camera || !renderer) return;
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
