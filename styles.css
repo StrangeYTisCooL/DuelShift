@@ -1,192 +1,83 @@
-// ---------- LOGIN ----------
-const menu = document.getElementById("menuOverlay");
-const loginBtn = document.getElementById("loginBtn");
-const playBtn = document.getElementById("playBtn");
-const menuButtons = document.getElementById("menuButtons");
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-const playerInfo = document.getElementById("playerInfo");
-const ammoUI = document.getElementById("ammoDisplay");
-
-let loggedIn = false;
-
-loginBtn.onclick = () => {
-  if (!usernameInput.value || !passwordInput.value) return;
-
-  if (usernameInput.value === "SkyPer" && passwordInput.value === "1618917") {
-    playerInfo.innerHTML = `<span style="color:red">[Owner]</span> SkyPer`;
-  } else {
-    playerInfo.innerHTML = `<span style="color:gray">[Player]</span> ${usernameInput.value}`;
-  }
-
-  usernameInput.style.display = "none";
-  passwordInput.style.display = "none";
-  loginBtn.style.display = "none";
-  menuButtons.style.display = "flex";
-  loggedIn = true;
-};
-
-playBtn.onclick = () => {
-  if (!loggedIn) return;
-  menu.style.display = "none";
-  ammoUI.style.display = "block";
-  startGame();
-};
-
-// ---------- GAME ----------
-let scene, camera, renderer, player;
-let yaw = 0, pitch = 0;
-let ammo = 6;
-
-const keys = {};
-document.addEventListener("keydown", e => keys[e.code] = true);
-document.addEventListener("keyup", e => keys[e.code] = false);
-
-function startGame() {
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x111111);
-
-  camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-
-  renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("game") });
-  renderer.setSize(innerWidth, innerHeight);
-
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(5, 10, 5);
-  scene.add(light);
-
-  // FLOOR
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(200, 200),
-    new THREE.MeshStandardMaterial({ color: 0x222222 })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  scene.add(floor);
-
-  // PLAYER (TEMP CYLINDER — REPLACE WITH BLOCKBENCH MODEL LATER)
-  player = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.5, 0.5, 2, 16),
-    new THREE.MeshStandardMaterial({ color: 0x888888 })
-  );
-  player.position.y = 1;
-  scene.add(player);
-
-  camera.position.set(0, 1.6, 0);
-  player.add(camera);
-
-  document.body.requestPointerLock();
-
-  animate();
+:root{
+  --bg:#0f1720;
+  --panel:#0b1220;
+  --accent:#10b981;
+  --muted:#94a3b8;
 }
 
-// ---------- MOUSE LOOK ----------
-document.addEventListener("mousemove", e => {
-  if (document.pointerLockElement !== document.body) return;
-  yaw -= e.movementX * 0.002;
-  pitch -= e.movementY * 0.002;
-  pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
-});
-
-// ---------- SHOOT ----------
-document.addEventListener("mousedown", () => {
-  if (ammo <= 0) return;
-  ammo--;
-  ammoUI.textContent = `Ammo: ${ammo} / 6`;
-
-  const ray = new THREE.Raycaster();
-  ray.setFromCamera(new THREE.Vector2(0, 0), camera);
-
-  const beam = new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints([
-      ray.ray.origin,
-      ray.ray.origin.clone().add(ray.ray.direction.multiplyScalar(40))
-    ]),
-    new THREE.LineBasicMaterial({ color: 0xffff00 })
-  );
-
-  scene.add(beam);
-  setTimeout(() => scene.remove(beam), 80);
-});
-
-// ---------- LOOP ----------
-function animate() {
-  requestAnimationFrame(animate);
-
-  player.rotation.y = yaw;
-  camera.rotation.x = pitch;
-
-  const speed = 0.12;
-  if (keys["KeyW"]) player.translateZ(-speed);
-  if (keys["KeyS"]) player.translateZ(speed);
-  if (keys["KeyA"]) player.translateX(-speed);
-  if (keys["KeyD"]) player.translateX(speed);
-
-  renderer.render(scene, camera);
+*{box-sizing:border-box;margin:0;padding:0}
+html,body,#app{height:100%;width:100%}
+body{
+  background:linear-gradient(180deg,var(--bg),#07101a);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  color: #e6eef6;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overflow:hidden; /* no scrolling */
 }
 
-window.addEventListener("resize", () => {
-  if (!camera || !renderer) return;
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background: #111;
-  font-family: Arial, sans-serif;
+/* Frame container keeps the game visible within the viewport.
+   We do NOT enable fullscreen; iframe has no allowfullscreen attribute. */
+#frame-wrap{
+  width:100%;
+  height:calc(100% - 56px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  padding:8px;
+  gap:8px;
 }
 
-/* MENU */
-#menuOverlay {
-  position: fixed;
-  inset: 0;
-  background: #111;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
+#game-frame{
+  width:100%;
+  height:100%;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:#000;
+  box-shadow:0 6px 18px rgba(2,6,23,0.6), inset 0 -6px 18px rgba(255,255,255,0.02);
 }
 
-#menuOverlay input,
-#menuOverlay button {
-  padding: 10px;
-  margin: 6px;
-  font-size: 16px;
+/* Bottom control bar (touch-friendly) */
+#controls{
+  height:56px;
+  width:100%;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  padding:8px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
+  border-top:1px solid rgba(255,255,255,0.02);
 }
 
-#menuButtons {
-  display: none;
-  gap: 15px;
-  margin-top: 20px;
+#controls button{
+  min-width:120px;
+  height:40px;
+  border-radius:10px;
+  border:0;
+  background:var(--panel);
+  color:var(--muted);
+  font-weight:600;
+  letter-spacing:0.2px;
+  padding:8px 12px;
+  box-shadow:0 4px 10px rgba(2,6,23,0.4);
+  transition:transform .12s ease, background .12s ease, color .12s ease;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* HUD */
-#playerInfo {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  color: white;
-  z-index: 5;
-}
+#controls button:hover{ transform:translateY(-2px) }
+#controls button:active{ transform:translateY(0) scale(.995) }
 
-#ammoDisplay {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  color: white;
-  background: #222;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-family: monospace;
-  display: none;
-}
+#reload{ background: linear-gradient(90deg,#0b1220,#0e1624); color:#dbeafe }
+#open-new{ background:linear-gradient(90deg,#072a1f,#063328); color:var(--accent) }
 
-/* CANVAS */
-canvas {
-  position: fixed;
-  inset: 0;
+/* Ensure all interactive elements are large enough for touch */
+button{ min-height:40px; min-width:44px; font-size:14px }
+
+/* Keep everything fitting in one screen height on mobile */
+@media (min-width:900px){
+  #frame-wrap{ height:calc(100% - 64px) }
+  #controls{ height:64px }
 }
