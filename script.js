@@ -25,3 +25,17 @@ const resize = () => {
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', resize);
 resize();
+#fullscreen-bar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  text-align: center;
+  padding: 8px;
+}
+
+#fullscreen-btn {
+  font-size: 16px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
