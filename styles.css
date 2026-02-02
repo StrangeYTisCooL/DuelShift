@@ -81,3 +81,17 @@ button{ min-height:40px; min-width:44px; font-size:14px }
   #frame-wrap{ height:calc(100% - 64px) }
   #controls{ height:64px }
 }
+#fullscreen-bar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  text-align: center;
+  padding: 8px;
+}
+
+#fullscreen-btn {
+  font-size: 16px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
